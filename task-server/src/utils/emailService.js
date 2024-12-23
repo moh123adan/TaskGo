@@ -1,9 +1,9 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 exports.sendPasswordResetEmail = async (email, resetToken) => {
   const transporter = nodemailer.createTransport({
     service: "Gmail",
-    auth: {
+    auth: {F
       user: "your_email@gmail.com",
       pass: "your_email_password",
     },
