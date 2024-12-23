@@ -118,12 +118,42 @@ export const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+export const updateUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  if (user) {
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    // Hash the new password if provided
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      _id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      token: createToken(updatedUser.id),
+    });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
 
 
 // @desc logout user 
 // @route GET /api/users/logout
 // @access Private
-export const logout = asyncHandler(async (req, res) => {
+export const logoutUser = asyncHandler(async (req, res) => {
   try {
     res.status(200).json({ status: true, message: "User logged out" });
   } catch (err) {
@@ -136,19 +166,19 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   // Find user by email
-  const jobSeeker = await JobSeeker.findOne({ email });
-  if (!jobSeeker) {
+  const user = await User.findOne({ email });
+  if (!user) {
     return res.status(404).json({ status: false, message: "User not found" });
   }
 
   // Generate OTP and expiration time
   const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
   const otpExpirationTime = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
-  jobSeeker.resetPasswordOTP = otp;
-  jobSeeker.resetPasswordExpires = otpExpirationTime;
+  user.resetPasswordOTP = otp;
+  user.resetPasswordExpires = otpExpirationTime;
 
   // Save OTP to the database
-  await jobSeeker.save();
+  await user.save();
 
   // Log OTP and expiration time for debugging purposes
   console.log(`Generated OTP: ${otp}`);
@@ -157,7 +187,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   );
 
   // Send OTP via email
-  await sendPasswordResetEmail(jobSeeker, otp); // Now sending OTP instead of token
+  await sendPasswordResetEmail(user, otp); // Now sending OTP instead of token
 
   res.status(200).json({
     status: true,
@@ -171,19 +201,19 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
   try {
     // Find the user by OTP
-    const jobSeeker = await JobSeeker.findOne({
+    const user = await User.findOne({
       resetPasswordOTP: otp, // Check if OTP matches
     });
 
     // Log both the submitted and stored OTP for debugging
     console.log(`Submitted OTP: ${otp}`);
-    if (jobSeeker) {
-      console.log(`Stored OTP: ${jobSeeker.resetPasswordOTP}`);
+    if (user) {
+      console.log(`Stored OTP: ${user.resetPasswordOTP}`);
     } else {
       console.log("User not found with provided OTP");
     }
 
-    if (!jobSeeker) {
+    if (!user) {
       return res.status(400).json({
         status: false,
         message: "Invalid OTP",
@@ -191,7 +221,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
     }
 
     // Check if OTP has expired
-    if (jobSeeker.resetPasswordExpires < Date.now()) {
+    if (user.resetPasswordExpires < Date.now()) {
       console.log("OTP has expired.");
       return res.status(400).json({
         status: false,
@@ -211,14 +241,14 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
     // Hash the new password
     const salt = await bcrypt.genSalt(10);
-    jobSeeker.password = await bcrypt.hash(newPassword, salt);
+    user.password = await bcrypt.hash(newPassword, salt);
 
     // Clear the OTP and expiration fields
-    jobSeeker.resetPasswordOTP = undefined;
-    jobSeeker.resetPasswordExpires = undefined;
+    user.resetPasswordOTP = undefined;
+    user.resetPasswordExpires = undefined;
 
     // Save the updated user data
-    await jobSeeker.save();
+    await user.save();
 
     // Respond with success
     res.status(200).json({
