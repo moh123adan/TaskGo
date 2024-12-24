@@ -1,35 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from "react";
+// import HeroSection from "./components/HeroSection";
+import MainSection from "./components/mainSection";
+import Features from "./components/Features";
+import TrustedBy from "./components/TrustedBy";
+import FeaturesSection from "./components/FeaturesSection";
+// import Features from "./components/Features";
+import SecondF from "./components/SecondF"; // Ensure this exists
+import Footer from "./components/Footer";
+// import Dashboard from "./components/Dashboard"; // Add a proper Dashboard component
+import { BrowserRouter  as Router,Routes, Route } from 'react-router-dom';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<MainSection />} />
+        {/* <Route path="/" element={<Features />} /> */}
+        <Route path="/login" element={<Features />} />
+        <Route path="/register" element={<TrustedBy />} />
+        <Route path="/resetpassword/features" element={<FeaturesSection />} />
+        {/* <Route path="/resetpassword/secondf" element={<SecondF />} /> */}
+        <Route path="/resetpassword/footer" element={<Footer />} />
+
+        {/* Protected Route */}
+        {/* <Route 
+          path="/dashboard/*" 
+          element={<Dashboard />} // Replace with your dashboard component
+        /> */}
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
